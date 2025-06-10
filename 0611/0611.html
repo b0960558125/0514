@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>海關英文問答遊戲</title>
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+    }
+    a-scene {
+      width: 100%; height: 100%;
+      position: fixed; top: 0; left: 0;
+    }
+    .mindar-ui-loading,
+    .mindar-ui-error,
+    .mindar-ui-scanning {
+      display: none;
+    }
+
+    #question-box {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #333;
+      font-size: 1.2em;
+      z-index: 1000;
+      max-width: 90%;
+    }
+
+    #buttons {
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-around;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+
+    button.correct {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    button.wrong {
+      background-color: #f44336;
+      color: white;
+    }
+
+    #result {
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 題目區塊 -->
+  <div id="question-box">
+    <div id="question-text"></div>
+    <div id="buttons">
+      <button id="btn-correct" class="correct"></button>
+      <button id="btn-wrong" class="wrong"></button>
+    </div>
+    <div id="result"></div>
+  </div>
+
+  <!-- AR 場景 -->
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; autoStart: true;"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+  >
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-entity mindar-image-target="targetIndex: 0" id="target"></a-entity>
+  </a-scene>
+
+  <script>
+    const questions = [
+      {
+        question: "1. What is the purpose of your visit?",
+        correct: "It’s a vacation.",
+        wrong: "I’m by myself.",
+      },
+      {
+        question: "2. Where will you be staying?",
+        correct: "A friend’s place",
+        wrong: "Two weeks",
+      },
+      {
+        question: "3. How long will you be staying?",
+        correct: "Two weeks",
+        wrong: "My cousin’s place.",
+      },
+    ];
+
+    let currentIndex = 0;
+    const questionBox = document.getElementById("question-box");
+    const questionText = document.getElementById("question-text");
+    const btnCorrect = document.getElementById("btn-correct");
+    const btnWrong = document.getElementById("btn-wrong");
+    const resultDiv = document.getElementById("result");
+
+    function showQuestion() {
+      const q = questions[currentIndex];
+      questionText.textContent = q.question;
+      btnCorrect.textContent = q.correct;
+      btnWrong.textContent = q.wrong;
+      resultDiv.textContent = "";
+    }
+
+    function endGame(msg) {
+      resultDiv.textContent = msg + " 遊戲結束！";
+      btnCorrect.disabled = true;
+      btnWrong.disabled = true;
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex >= questions.length) {
+        resultDiv.textContent = "恭喜你完成所有題目！🎉";
+        btnCorrect.disabled = true;
+        btnWrong.disabled = true;
+        return;
+      }
+      showQuestion();
+    }
+
+    btnCorrect.addEventListener("click", () => {
+      if (currentIndex % 2 === 0) {
+        nextQuestion();
+      } else {
+        endGame(`答錯了，正確答案是：${questions[currentIndex].correct}`);
+      }
+    });
+
+    btnWrong.addEventListener("click", () => {
+      if (currentIndex % 2 === 0) {
+        endGame(`答錯了，正確答案是：${questions[currentIndex].correct}`);
+      } else {
+        nextQuestion();
+      }
+    });
+
+    const targetEl = document.querySelector("#target");
+
+    targetEl.addEventListener("targetFound", () => {
+      questionBox.style.display = "block";
+      currentIndex = 0;
+      btnCorrect.disabled = false;
+      btnWrong.disabled = false;
+      showQuestion();
+    });
+
+    targetEl.addEventListener("targetLost", () => {
+      questionBox.style.display = "none";
+    });
+  </script>
+</body>
+</html>
