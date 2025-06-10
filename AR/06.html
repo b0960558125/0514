@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AR 海關英文選擇題遊戲</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
+    <style>
+      #question-box {
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        width: 90%;
+        max-width: 600px;
+        font-size: 1.2em;
+        border-radius: 10px;
+        box-shadow: 0 0 10px #00000055;
+        display: none; /* 一開始隱藏 */
+      }
+      #buttons {
+        margin-top: 15px;
+        display: flex;
+        justify-content: space-around;
+      }
+      button {
+        font-size: 1em;
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        user-select: none;
+      }
+      button.correct {
+        background-color: #4caf50;
+        color: white;
+      }
+      button.wrong {
+        background-color: #f44336;
+        color: white;
+      }
+      #result {
+        margin-top: 10px;
+        font-weight: bold;
+        text-align: center;
+        color: #d32f2f;
+      }
+    </style>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene
+      vr-mode-ui="enabled: false"
+      embedded
+      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+    >
+      <a-nft
+        id="marker"
+        type="mind"
+        url="targets"
+        smooth="true"
+        smoothCount="10"
+        smoothTolerance="0.01"
+        smoothThreshold="5"
+      >
+        <a-box position="0 0.5 0" material="color: blue; opacity: 0.5"></a-box>
+      </a-nft>
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <div id="question-box">
+      <div id="question-text"></div>
+      <div id="buttons">
+        <button id="btn-correct" class="correct"></button>
+        <button id="btn-wrong" class="wrong"></button>
+      </div>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      const questions = [
+        {
+          question: "1. What is the purpose of your visit? （你的造訪目的）",
+          correct: "It’s a vacation.",
+          wrong: "I’m by myself.",
+        },
+        {
+          question: "2. Where will you be staying? （你預計會短住在哪裡？）",
+          correct: "A friend’s place",
+          wrong: "Two weeks",
+        },
+        {
+          question: "3. How long will you be staying?（你預計會停留多久？）",
+          correct: "Two weeks",
+          wrong: "My cousin’s place.",
+        },
+        {
+          question: "4. What are you planning to do during your visit? （你預計這段期間會做些什麼）",
+          correct: "Shopping",
+          wrong: "I’m by myself.",
+        },
+        {
+          question: "5. Will you be visiting other cities? （你會去其他城市嗎？）",
+          correct: "Yes, I’ll also go to ＬＡ.",
+          wrong: "I come from Taiwan",
+        },
+        {
+          question: "6. Who are you traveling with? （你和誰一起來呢？）",
+          correct: "My friends",
+          wrong: "A friend’s place",
+        },
+        {
+          question: "7. Do you have a return ticket? （你有回程機票嗎？）",
+          correct: "My return flight is on July 4th.",
+          wrong: "I'm visiting my friend.",
+        },
+        {
+          question: "8. Good afternoon. May I see your passport, please?（下午好，我可以看你的護照嗎？）",
+          correct: "Sure, here you go.",
+          wrong: "NO!",
+        },
+        {
+          question: "9. How much money are you carrying?（你帶了多少現金？）",
+          correct: "I have about 500 US dollars and a credit card.",
+          wrong: "I have about 5 US dollars.",
+        },
+        {
+          question: "10. What’s your occupation? (你的職業什麼？）",
+          correct: "I am a teacher.",
+          wrong: "Sure, here you go.",
+        },
+      ];
+
+      let currentIndex = 0;
+      const questionBox = document.getElementById("question-box");
+      const questionText = document.getElementById("question-text");
+      const btnCorrect = document.getElementById("btn-correct");
+      const btnWrong = document.getElementById("btn-wrong");
+      const resultDiv = document.getElementById("result");
+
+      function showQuestion() {
+        const q = questions[currentIndex];
+        questionText.textContent = q.question;
+        btnCorrect.textContent = q.correct;
+        btnWrong.textContent = q.wrong;
+        resultDiv.textContent = "";
+      }
+
+      function endGame(msg) {
+        resultDiv.textContent = msg + " 遊戲結束！請重新整理頁面再玩一次。";
+        btnCorrect.disabled = true;
+        btnWrong.disabled = true;
+      }
+
+      function nextQuestion() {
+        currentIndex++;
+        if (currentIndex >= questions.length) {
+          resultDiv.textContent = "恭喜你全部答對！遊戲完成！🎉";
+          btnCorrect.disabled = true;
+          btnWrong.disabled = true;
+          return;
+        }
+        showQuestion();
+      }
+
+      btnCorrect.addEventListener("click", () => {
+        const q = questions[currentIndex];
+        if (currentIndex % 2 === 0) {
+          nextQuestion();
+        } else {
+          endGame(`這題正確答案是：${q.correct}`);
+        }
+      });
+
+      btnWrong.addEventListener("click", () => {
+        if (currentIndex % 2 === 0) {
+          const q = questions[currentIndex];
+          endGame(`這題正確答案是：${q.correct}`);
+        } else {
+          nextQuestion();
+        }
+      });
+
+      // 先不顯示題目，等掃到標記才顯示
+      questionBox.style.display = "none";
+
+      // 監聽marker事件
+      const marker = document.querySelector("#marker");
+      marker.addEventListener("markerFound", () => {
+        questionBox.style.display = "block";
+        // 開始顯示題目
+        currentIndex = 0;
+        btnCorrect.disabled = false;
+        btnWrong.disabled = false;
+        showQuestion();
+        resultDiv.textContent = "";
+      });
+      marker.addEventListener("markerLost", () => {
+        questionBox.style.display = "none";
+      });
+    </script>
+  </body>
+</html>
